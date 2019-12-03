@@ -55,12 +55,15 @@ def plot3Ddata(ds,name):
 #plotData(ds)
 #plot3Ddata(ds,"w")
 
-def loopWithLambda(termCondition, thresholdCondition,start,loopEnd,loopInc):
+def loopWithLambda(thresholdCondition,start,end,winLength,forward=True):
     found = False
+    inc = 1 if forward else -1
 
     while(not found):
-        for y in range(start, loopEnd(start),loopInc):
-            if(termCondition(y)): return None
+        end = start + winLength if forward else start -winLength 
+        for y in range(start, end,inc):
+            if(forward and y > end): return None
+            if(not forward and y < end): return None
             if(not thresholdCondition(y)):
                 start = y+1
                 found = False
@@ -91,7 +94,7 @@ def searchContinuityAboveValue(data, indexBegin, indexEnd, threshold, winLength)
 def searchContinuityAboveValueLambda(data, indexBegin, indexEnd, threshold, winLength):
     if(indexBegin > indexEnd): raise ValueError("indexBegin is greater than the indexEnd")
     if(-indexBegin + indexEnd < winLength): raise ValueError("winLength is too long for the range")
-    return loopWithLambda(lambda y: y > indexEnd, lambda y: data[y] >= threshold, indexBegin, lambda x: x + winLength,1 )
+    return loopWithLambda(lambda y: data[y] >= threshold, indexBegin,indexEnd,winLength)
 
 ## Assumption is data is a column, meaning it can be identified by the name timestamp,ax,ay,ax, wx,wy,wz
 ## We will use a sliding window so we don't have to keep rechecking indices that have already been checked
@@ -116,7 +119,7 @@ def backSearchContinuityWithinRangeLambda(data, indexBegin, indexEnd, thresholdL
     if(indexBegin < indexEnd): raise ValueError("indexBegin is smaller than the indexEnd")
     if(-indexEnd + indexBegin < winLength): raise ValueError("winLength is too long for the range")
     if(thresholdHi < thresholdLo): raise ValueError("thresholdLo is larger than thresholdHi")
-    return loopWithLambda(lambda y: y < indexEnd, lambda y: data[y] >= thresholdLo and data[y] <= thresholdHi, indexBegin, lambda x: x - winLength-1,-1)
+    return loopWithLambda(lambda y: data[y] >= thresholdLo and data[y] <= thresholdHi, indexBegin, indexEnd, False)
     
 ## Assumption is data is a column, meaning it can be identified by the name timestamp,ax,ay,ax, wx,wy,wz
 ## We will use a sliding window so we don't have to keep rechecking indices that have already been checked
@@ -139,7 +142,7 @@ def searchContinuityAboveValueTwoSignals(data1, data2, indexBegin, indexEnd, thr
 def searchContinuityAboveValueTwoSignalsLambda(data1, data2, indexBegin, indexEnd, threshold1, threshold2, winLength):
     if(indexBegin > indexEnd): raise ValueError("indexBegin is greater than the indexEnd")
     if(-indexBegin + indexEnd < winLength): raise ValueError("winLength is too long for the range")
-    return loopWithLambda(lambda y: y > indexEnd, lambda y: data1[y] > threshold1 and data1[y] > threshold2, indexBegin, lambda x: x+ winLength,1)
+    return loopWithLambda(lambda y: data1[y] > threshold1 and data1[y] > threshold2, indexBegin,indexEnd)
 
 ## Assumption is data is a column, meaning it can be identified by the name timestamp,ax,ay,ax, wx,wy,wz
 ## We will use a sliding window so we don't have to keep rechecking indices that have already been checked
