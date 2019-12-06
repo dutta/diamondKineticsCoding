@@ -144,6 +144,8 @@ def searchContinuityAboveValueTwoSignalsLambda(data1, data2, indexBegin, indexEn
     if(-indexBegin + indexEnd < winLength): raise ValueError("winLength is too long for the range")
     return loopWithLambda(lambda y: data1[y] > threshold1 and data1[y] > threshold2, indexBegin,indexEnd,winLength)
 
+
+
 ## Assumption is data is a column, meaning it can be identified by the name timestamp,ax,ay,ax, wx,wy,wz
 ## We will use a sliding window so we don't have to keep rechecking indices that have already been checked
 def searchMultiContinuityWithinRange(data, indexBegin, indexEnd, thresholdLo, thresholdHi, winLength):
@@ -166,9 +168,36 @@ def searchMultiContinuityWithinRange(data, indexBegin, indexEnd, thresholdLo, th
             vals.append((start,start+winLength))
             start = start + 1
             found = False
+    
     return vals
 
-#### WE use this function to see at what point we have the swing, we can see from the plots that there is a huge jump in each
+#given a list of indices, merge them into tuples
+def merge_vals(vals,winLength):
+    indices = []
+    start = 0
+    end = 0
+    for i in range(len(vals)-1):
+        if(vals[i+1]-vals[i] > 1):
+            end = i+1
+            if(end - start >= winLength):
+                indices.append((start,end))
+            start = end
+    return indices
+
+
+def searchMultiContinuityWithinRangeLambda(data, indexBegin, indexEnd, thresholdLo, thresholdHi, winLength):
+    if(indexBegin > indexEnd): raise ValueError("indexBegin is greater than the indexEnd")
+    if(-indexBegin + indexEnd < winLength): raise ValueError("winLength is too long for the range")
+    if(thresholdHi < thresholdLo): raise ValueError("thresholdLo is larger than thresholdHi")
+    vals = []
+    for i in range(indexBegin,indexEnd):
+        thresholded = loopWithLambda(lambda y: data[y] >= thresholdLo and data[y] <= thresholdHi, i,i+1,1)
+        vals.append(thresholded)
+        
+    return merge_vals(vals,winLength)
+
+
+#### WE use this function to see at what point we ha    ve the swing, we can see from the plots that there is a huge jump in each
 # component when this takes place, so we just want to find the frame at which this jump happens
 # USING THIS WE SEE THE SWING HAPPENS AROUND FRAME 875, this is consistent with the plots
 #   ####
